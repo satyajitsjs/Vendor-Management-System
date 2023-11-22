@@ -1,8 +1,21 @@
 from django.db import models
 from django.db.models import JSONField
 from django.utils import timezone
+from django.contrib.auth.models import AbstractUser
+from .manager import UserManager
 # from django.db.models import Count, Avg
 # Create your models here.
+
+
+class CustomUser(AbstractUser):
+    email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length = 100 , unique = True)
+
+    USERNAME_FIELD  = "email"
+    REQUIRED_FIELDS =  ["password"]
+    objects = UserManager()
+
+
 
 
 class Vendor(models.Model):
