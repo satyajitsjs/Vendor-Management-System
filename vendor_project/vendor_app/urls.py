@@ -8,5 +8,7 @@ urlpatterns = [
     path('purchase_orders', v.PurchaseOrderListCreateView.as_view(), name='purchase-order-list-create'),
     path('purchase_orders/<int:pk>', v.PurchaseOrderDetailView.as_view(), name='purchase-order-detail'),
     path('vendors/<int:pk>/performance', v.VendorPerformanceView.as_view(), name='vendor-performance'),
-    path('token', obtain_auth_token, name='api_token'),
+    path('register', v.UserRegistrationView.as_view(), name='user-registration'),
+    # path('login', obtain_auth_token, name='api_token'),
+    path('login', v.UserLoginView.as_view(), name='api_token'),
 ]

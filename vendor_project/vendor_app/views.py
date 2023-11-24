@@ -1,12 +1,39 @@
 from rest_framework import status
 from django.http import JsonResponse
 from rest_framework import generics
-from .models import Vendor, PurchaseOrder, HistoricalPerformance
-from .serializers import VendorSerializer, PurchaseOrderSerializer, HistoricalPerformanceSerializer
+from .models import Vendor, PurchaseOrder, HistoricalPerformance,CustomUser 
+from .serializers import VendorSerializer, PurchaseOrderSerializer, HistoricalPerformanceSerializer,UserSerializer
 from django.db import models
 from rest_framework.permissions import IsAuthenticated
-
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
+from rest_framework.views import APIView
+from django.contrib.auth import authenticate
 # Create your views here.
+
+
+class UserRegistrationView(generics.CreateAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = UserSerializer
+
+
+class UserLoginView(APIView):
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        password = request.data.get('password')
+
+        if email is None or password is None:
+            return JsonResponse({'error': 'Please provide both email and password'}, status=400)
+
+
+        user = CustomUser.objects.get(email=email, password=password)
+
+        if user is not None:
+            token, created = Token.objects.get_or_create(user=user)
+            return JsonResponse({'token': token.key, 'username': user.username})
+        else:
+            print("Authentication failed")
+            return JsonResponse({'error': 'Unable to log in with provided credentials.'}, status=401)
 
 # Vendor Profile Management:
 class VendorListCreateView(generics.ListCreateAPIView):
@@ -21,6 +48,8 @@ class VendorListCreateView(generics.ListCreateAPIView):
         headers = self.get_success_headers(serializer.data)
         return JsonResponse({'message': 'Vendor created successfully', 'data': serializer.data}, status=status.HTTP_201_CREATED, headers=headers)
     
+
+
 class VendorDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
     queryset = Vendor.objects.all()

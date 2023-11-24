@@ -9,12 +9,9 @@ from .manager import UserManager
 
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length = 100 , unique = True)
-
     USERNAME_FIELD  = "email"
     REQUIRED_FIELDS =  ["password"]
     objects = UserManager()
-
 
 
 

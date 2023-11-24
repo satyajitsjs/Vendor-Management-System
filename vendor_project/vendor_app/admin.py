@@ -15,7 +15,13 @@ class HistoricalPerformanceAdmin(admin.ModelAdmin):
     list_display = ('id', 'vendor', 'date', 'on_time_delivery_rate', 'quality_rating_avg', 'average_response_time', 'fulfillment_rate')
     search_fields = ['vendor__name']
 
+class CustomUserAdmin(admin.ModelAdmin):
+    list_display = ('id','username' ,'email', 'password' , 'is_superuser' , 'is_staff')
+    search_fields = ['username']
+
+
+
 admin.site.register(Vendor, VendorAdmin)
 admin.site.register(PurchaseOrder, PurchaseOrderAdmin)
 admin.site.register(HistoricalPerformance, HistoricalPerformanceAdmin)
-admin.site.register(CustomUser)
+admin.site.register(CustomUser,CustomUserAdmin)

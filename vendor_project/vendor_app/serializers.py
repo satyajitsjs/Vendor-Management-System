@@ -1,5 +1,13 @@
 from rest_framework import serializers
-from .models import Vendor, PurchaseOrder, HistoricalPerformance
+from .models import Vendor, PurchaseOrder, HistoricalPerformance , CustomUser
+
+
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'email' , 'password']
 
 class VendorSerializer(serializers.ModelSerializer):
     class Meta:
