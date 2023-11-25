@@ -1,13 +1,15 @@
 # Vendor-Management-System
 
 # 1st Step:-
+pip install virtualenv
+virtualenv envsmart
 .\envsmart\Scripts\activate
 pip install -r .\requierment.txt
 cd .\vendor_project\
 python.exe .\manage.py runserver
 
 
-# Test 
+# Test in Postman
 
 # Register Api 
 http://127.0.0.1:8000/api/register
@@ -76,19 +78,23 @@ POST
 }
 
 # Get the purchase_orders
-Ap:- http://127.0.0.1:8000/api/purchase_orders
+Api:- http://127.0.0.1:8000/api/purchase_orders
 GET
 
 
 # Get the perticular purchase_orders
-Ap:- http://127.0.0.1:8000/api/purchase_orders/1
+Api:- http://127.0.0.1:8000/api/purchase_orders/1
 GET
 
 # Update the perticular purchase_orders
-Ap:- http://127.0.0.1:8000/api/purchase_orders/1
+Api:- http://127.0.0.1:8000/api/purchase_orders/1
 PUT
 
 # Delete the perticular purchase_orders
-Ap:- http://127.0.0.1:8000/api/purchase_orders/1
+Api:- http://127.0.0.1:8000/api/purchase_orders/1
 DELETE
 
+
+# Get the Vendor Whole ratings and review
+Api :- http://127.0.0.1:8000/api/vendors/1/performance
+GET

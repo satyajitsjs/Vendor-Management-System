@@ -9,6 +9,8 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from django.contrib.auth import authenticate
+from django.db.models import Avg , ExpressionWrapper, F, fields
+from django.utils import timezone
 # Create your views here.
 
 
@@ -103,6 +105,7 @@ class PurchaseOrderDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 
+
 # Vendor Performance Evaluation:
 class VendorPerformanceView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
@@ -112,23 +115,58 @@ class VendorPerformanceView(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         vendor = self.get_object()
 
-        # Calculate metrics
+        
+        
+            # Calculate metrics
         total_completed_orders = PurchaseOrder.objects.filter(vendor=vendor, status='completed').count()
-        on_time_delivery_rate = PurchaseOrder.objects.filter(vendor=vendor, status='completed', delivery_date__lte=models.F('acknowledgment_date')).count() / total_completed_orders * 100 if total_completed_orders > 0 else 0.0
-        quality_rating_avg = PurchaseOrder.objects.filter(vendor=vendor, status='completed', quality_rating__isnull=False).aggregate(Avg('quality_rating'))['quality_rating__avg'] or 0.0
-        average_response_time = PurchaseOrder.objects.filter(vendor=vendor, acknowledgment_date__isnull=False).aggregate(Avg(models.F('acknowledgment_date') - models.F('issue_date')))['acknowledgment_date__avg'] or 0.0
-        fulfillment_rate = total_completed_orders / PurchaseOrder.objects.filter(vendor=vendor).count() * 100 if PurchaseOrder.objects.filter(vendor=vendor).count() > 0 else 0.0
 
-        # Create a new HistoricalPerformance instance
-        historical_performance = HistoricalPerformance.objects.create(
+        on_time_delivery_rate = PurchaseOrder.objects.filter(
             vendor=vendor,
-            date=models.DateTimeField.now(),
-            on_time_delivery_rate=on_time_delivery_rate,
-            quality_rating_avg=quality_rating_avg,
-            average_response_time=average_response_time,
-            fulfillment_rate=fulfillment_rate
-        )
+            status='completed',
+            delivery_date__lte=F('acknowledgment_date')
+        ).count() / total_completed_orders * 100 if total_completed_orders > 0 else 0.0
 
+        quality_rating_avg = PurchaseOrder.objects.filter(
+            vendor=vendor,
+            status='completed',
+            quality_rating__isnull=False
+        ).aggregate(quality_rating_avg=Avg('quality_rating'))['quality_rating_avg'] or 0.0
+
+        average_response_time = PurchaseOrder.objects.filter(
+            vendor=vendor,
+            acknowledgment_date__isnull=False
+        ).aggregate(
+            average_response_time=Avg(ExpressionWrapper(F('acknowledgment_date') - F('issue_date'), output_field=fields.DurationField()))
+        )['average_response_time'] or 0.0
+
+        fulfillment_rate = total_completed_orders / PurchaseOrder.objects.filter(vendor=vendor).count() * 100 if PurchaseOrder.objects.filter(vendor=vendor).count() > 0 else 0.0
+        
+        vendor_exist = HistoricalPerformance.objects.get(vendor=vendor)
+        
+        if vendor_exist is None:
+            # Create a new HistoricalPerformance instance
+            historical_performance = HistoricalPerformance.objects.create(
+                vendor=vendor,
+                date=timezone.now(),
+                on_time_delivery_rate=on_time_delivery_rate,
+                quality_rating_avg=quality_rating_avg,
+                average_response_time=average_response_time,
+                fulfillment_rate=fulfillment_rate
+            )
+            serializer = HistoricalPerformanceSerializer(historical_performance)
+            return JsonResponse(serializer.data)
+        else:
+            vendor_exist.date=timezone.now()
+            vendor_exist.on_time_delivery_rate=on_time_delivery_rate,
+            vendor_exist.quality_rating_avg=quality_rating_avg,
+            vendor_exist.average_response_time=average_response_time,
+            vendor_exist.fulfillment_rate=fulfillment_rate
         # Return metrics as JSON response
-        serializer = HistoricalPerformanceSerializer(historical_performance)
-        return JsonResponse(serializer.data)
+        return JsonResponse ({
+            "id":vendor_exist.id,
+            "date":vendor_exist.date,
+            "on_time_delivery_rate":vendor_exist.on_time_delivery_rate,
+            "quality_rating_avg":vendor_exist.quality_rating_avg,
+            "average_response_time":vendor_exist.average_response_time,
+            "fulfillment_rate":vendor_exist.fulfillment_rate
+        })
